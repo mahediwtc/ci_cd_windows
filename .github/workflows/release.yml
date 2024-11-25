@@ -1,0 +1,67 @@
+name: Build and Release Windows Counter App
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      # Step 1: Checkout code
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      # Step 2: Set up Flutter
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: stable
+
+      # Step 3: Install dependencies
+      - name: Install Dependencies
+        run: flutter pub get
+
+      # Step 4: Build Flutter app for Windows
+      - name: Build Flutter Windows App
+        run: flutter build windows --release
+
+      # Step 5: Install Inno Setup
+      - name: Install Inno Setup
+        run: choco install innosetup --no-progress
+
+      # Step 6: Create Installer using Inno Setup
+      - name: Create Windows Installer
+        run: '"C:\Program Files (x86)\Inno Setup 6\ISCC.exe" setup.iss'
+
+      # Step 7: Upload Installer as Artifact
+      - name: Upload Windows Installer
+        uses: actions/upload-artifact@v3
+        with:
+          name: CounterAppInstaller
+          path: CounterAppInstaller.exe
+
+  release:
+    runs-on: windows-latest
+    needs: build
+
+    steps:
+      # Step 1: Download Artifact
+      - name: Download Windows Installer
+        uses: actions/download-artifact@v3
+        with:
+          name: CounterAppInstaller
+
+      # Step 2: Create GitHub Release
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: CounterApp ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+          files: CounterAppInstaller.exe
