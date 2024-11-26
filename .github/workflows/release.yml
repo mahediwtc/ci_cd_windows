@@ -3,7 +3,7 @@ name: Build and Release Windows Counter App
 on:
   push:
     branches:
-      - master
+      - main
 
 jobs:
   build:
@@ -18,25 +18,30 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.13.6'
+          flutter-version: '3.24.3' # Specify the latest version
 
-      # Step 3: Install dependencies
+      # Step 3: Verify Flutter Version
+      - name: Verify Flutter Version
+        run: flutter --version
+
+      # Step 4: Install dependencies
       - name: Install Dependencies
         run: flutter pub get
 
-      # Step 4: Build Flutter app for Windows
+      # Step 5: Build Flutter Windows App
       - name: Build Flutter Windows App
         run: flutter build windows --release
 
-      # Step 5: Install Inno Setup
+      # Step 6: Install Inno Setup
       - name: Install Inno Setup
         run: choco install innosetup --no-progress
 
-      # Step 6: Create Installer using Inno Setup
+      # Step 7: Create Installer using Inno Setup
       - name: Create Windows Installer
-        run: '"C:\Program Files (x86)\Inno Setup 6\ISCC.exe" setup.iss'
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "setup.iss"
 
-      # Step 7: Upload Installer as Artifact
+      # Step 8: Upload Installer as Artifact
       - name: Upload Windows Installer
         uses: actions/upload-artifact@v3
         with:
